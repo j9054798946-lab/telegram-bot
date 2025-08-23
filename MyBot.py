@@ -432,8 +432,9 @@ def webhook():
 # Установка вебхука
 @app.route('/set_webhook', methods=['GET', 'POST'])
 def set_webhook():
-    # Жестко задаем правильный URL
-    webhook_url = 'https://jen3112.pythonanywhere.com/webhook'
+    # Динамически определяем URL текущего приложения
+    from flask import request
+    webhook_url = request.url_root + 'webhook'
     
     logger.info(f"Установка webhook на URL: {webhook_url}")
     
