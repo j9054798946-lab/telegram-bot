@@ -500,8 +500,3 @@ def start_polling():
     except Exception as e:
         logger.error(f"Ошибка при запуске polling: {e}")
         return f"❌ Error starting polling: {e}", 500
-
-# Запуск для Render.com
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
