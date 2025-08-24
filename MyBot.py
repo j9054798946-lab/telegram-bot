@@ -496,6 +496,14 @@ if __name__ == '__main__':
     app.run(host='0.0.0.0', port=port)
     # ... весь предыдущий код ...
 
+@app.route('/check_token', methods=['GET'])
+def check_token():
+    try:
+        me = bot.get_me()
+        return f"✅ Токен действителен: @{me.username}"
+    except Exception as e:
+        return f"❌ Ошибка токена: {e}"
+
 # Маршрут для запуска polling (альтернатива webhook)
 @app.route('/start_polling', methods=['GET'])
 def start_polling():
