@@ -546,8 +546,9 @@ def test_telegram():
     except Exception as e:
         logger.error(f"Ошибка при запуске polling: {e}")
         return f"❌ Error starting polling: {e}", 500
-    @app.route('/polling_debug', methods=['GET'])
 
+
+@app.route('/polling_debug', methods=['GET'])
 def polling_debug():
     try:
         # Проверим, запущен ли бот
