@@ -421,13 +421,23 @@ def handle_callback(call):
 # Вебхук для Telegram
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    if request.headers.get('content-type') == 'application/json':
-        json_string = request.get_data().decode('utf-8')
-        update = telebot.types.Update.de_json(json_string)
-        bot.process_new_updates([update])
-        return ''
-    else:
-        abort(403)
+    try:
+        if request.headers.get('content-type') == 'application/json':
+            json_string = request.get_data().decode('utf-8')
+            logger.info(f"JSON: {json_string}")
+            
+            # Используем альтернативный способ обработки
+            import telebot
+            update = telebot.util.update_de_json(json_string)
+            bot.process_new_updates([update])
+            
+            return ''
+        else:
+            abort(403)
+    except Exception as e:
+        logger.error(f"Error: {e}")
+        logger.error(traceback.format_exc())
+        return "Error", 500
 
 # Установка вебхука
 @app.route('/set_webhook', methods=['GET', 'POST'])
@@ -462,6 +472,36 @@ def remove_webhook():
 # Запуск без SSL для локальной разработки
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
+    # ... весь предыдущий код ...
+
+# Маршрут для запуска polling (альтернатива webhook)
+@app.route('/start_polling', methods=['GET'])
+def start_polling():
+    try:
+        # Удаляем webhook, если он был установлен
+        bot.remove_webhook()
+        logger.info("Webhook удален")
+        
+        # Запускаем polling в отдельном потоке
+        def polling_worker():
+            logger.info("Запуск polling...")
+            bot.infinity_polling()
+        
+        # Запускаем поток как демон (чтобы не мешать основному приложению)
+        polling_thread = threading.Thread(target=polling_worker, daemon=True)
+        polling_thread.start()
+        
+        logger.info("Polling запущен в фоновом режиме")
+        return "✅ Polling started successfully"
+        
+    except Exception as e:
+        logger.error(f"Ошибка при запуске polling: {e}")
+        return f"❌ Error starting polling: {e}", 500
+
+# Запуск для Render.com
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
