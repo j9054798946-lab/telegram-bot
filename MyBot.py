@@ -432,8 +432,12 @@ def webhook():
 @app.route('/set_webhook', methods=['GET', 'POST'])
 def set_webhook():
     try:
-        # Жестко задаем URL для ngrok
-        webhook_url = 'https://9c953ea5bf27.ngrok-free.app/webhook'
+        # Динамически определяем URL текущего приложения
+        from flask import request
+        webhook_url = request.url_root + 'webhook'
+        
+        # Заменяем http на https (Render.com использует HTTPS)
+        webhook_url = webhook_url.replace('http://', 'https://')
         
         logger.info(f"Установка webhook на URL: {webhook_url}")
         
@@ -454,6 +458,33 @@ def set_webhook():
     except Exception as e:
         logger.error(f"Ошибка при установке webhook: {e}")
         return f"Error: {e}", 500
+    
+@app.route('/remove_webhook', methods=['GET', 'POST'])
+def remove_webhook():
+    try:
+        logger.info("Удаление webhook...")
+        bot.remove_webhook()
+        logger.info("Webhook удален")
+        return "Webhook removed successfully"
+    except Exception as e:
+        logger.error(f"Ошибка при удалении webhook: {e}")
+        return f"Error: {e}", 500
+
+@app.route('/webhook_status', methods=['GET'])
+def webhook_status():
+    try:
+        info = bot.get_webhook_info()
+        return f"""
+        <h2>Статус Webhook</h2>
+        <p><b>URL:</b> {info.url}</p>
+        <p><b>Custom certificate:</b> {info.has_custom_certificate}</p>
+        <p><b>Pending updates:</b> {info.pending_update_count}</p>
+        <p><b>Last error date:</b> {info.last_error_date}</p>
+        <p><b>Last error message:</b> {info.last_error_message}</p>
+        """
+    except Exception as e:
+        return f"Error getting webhook info: {e}"
+
 
 # Главная страница для проверки
 @app.route('/')
