@@ -153,6 +153,24 @@ def send_welcome(message):
         reply_markup=main_menu()
     )
 
+@bot.message_handler(func=lambda message: True)
+def debug_all_messages(message):
+    logger.info(f"📨 Получено сообщение от {message.from_user.id}: {message.text}")
+    
+    # Обработка команды /start
+    if message.text == '/start':
+        logger.info(f"🚀 Обработка /start от {message.chat.id}")
+        try:
+            bot.send_message(
+                message.chat.id,
+                "👋 Добро пожаловать! Выберите раздел:",
+                reply_markup=main_menu()
+            )
+            logger.info(f"✅ Главное меню отправлено {message.chat.id}")
+        except Exception as e:
+            logger.error(f"❌ Ошибка отправки: {e}")
+
+
 # Обработчик callback-кнопок
 @bot.callback_query_handler(func=lambda call: True)
 def handle_callback(call):
@@ -481,16 +499,43 @@ if __name__ == '__main__':
 # Маршрут для запуска polling (альтернатива webhook)
 @app.route('/start_polling', methods=['GET'])
 def start_polling():
+    import threading
+    import time
+    
     try:
-        # Удаляем webhook, если он был установлен
         bot.remove_webhook()
         logger.info("Webhook удален")
         
-        # Запускаем polling в отдельном потоке
         def polling_worker():
             logger.info("Запуск polling...")
-            bot.infinity_polling()
+            while True:
+                try:
+                    # Используем polling с таймаутом
+                    bot.polling(none_stop=False, interval=1, timeout=10)
+                    logger.info("Polling перезапущен")
+                except Exception as e:
+                    logger.error(f"Ошибка polling: {e}")
+                    time.sleep(5)  # Пауза перед перезапуском
         
+        polling_thread = threading.Thread(target=polling_worker, daemon=True)
+        polling_thread.start()
+        
+        logger.info("Polling запущен в фоновом режиме")
+        return "✅ Polling started successfully"
+        
+    except Exception as e:
+        logger.error(f"Ошибка при запуске polling: {e}")
+        return f"❌ Error starting polling: {e}", 500
+
+@app.route('/test_telegram', methods=['GET'])
+def test_telegram():
+    try:
+        response = requests.get('https://api.telegram.org', timeout=5)
+        return f"✅ Доступ к Telegram API: {response.status_code}"
+    except Exception as e:
+        return f"❌ Ошибка доступа: {e}"
+
+
         # Запускаем поток как демон (чтобы не мешать основному приложению)
         polling_thread = threading.Thread(target=polling_worker, daemon=True)
         polling_thread.start()
@@ -501,3 +546,17 @@ def start_polling():
     except Exception as e:
         logger.error(f"Ошибка при запуске polling: {e}")
         return f"❌ Error starting polling: {e}", 500
+    @app.route('/polling_debug', methods=['GET'])
+
+def polling_debug():
+    try:
+        # Проверим, запущен ли бот
+        me = bot.get_me()
+        debug_info = f"""
+        ✅ Бот запущен: @{me.username}
+        📊 Статус: Работает
+        🔧 Режим: Polling
+        """
+        return debug_info
+    except Exception as e:
+        return f"❌ Ошибка: {e}"
