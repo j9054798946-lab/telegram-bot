@@ -9,7 +9,7 @@ import requests
 from telebot import apihelper
 
 # Отключаем прокси (на Render.com не нужен)
-apihelper.proxy = None
+# apihelper.proxy = None
 
 # Включаем логирование
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
