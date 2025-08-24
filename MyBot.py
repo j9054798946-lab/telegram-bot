@@ -7,6 +7,7 @@ from flask import Flask, request, abort
 import time
 import requests
 from telebot import apihelper
+import threading
 
 # Отключаем прокси (на Render.com не нужен)
 # apihelper.proxy = None
